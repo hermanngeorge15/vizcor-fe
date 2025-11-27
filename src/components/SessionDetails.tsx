@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Card, CardBody, CardHeader, Chip, Tabs, Tab, Spinner, Button } from '@heroui/react'
-import { FiRefreshCw, FiRadio, FiGitBranch, FiList, FiPlay, FiRotateCcw, FiTrash2 } from 'react-icons/fi'
+import { FiRefreshCw, FiRadio, FiGitBranch, FiList, FiPlay, FiRotateCcw, FiTrash2, FiLayers } from 'react-icons/fi'
 import { useSession, useSessionEvents, useDeleteSession } from '@/hooks/use-sessions'
 import { useEventStream } from '@/hooks/use-event-stream'
 import { useRunScenario } from '@/hooks/use-scenarios'
@@ -11,6 +11,7 @@ import { EventsList } from './EventsList'
 import { JobStateDisplay } from './JobStateDisplay'
 import { StructuredConcurrencyInfo } from './StructuredConcurrencyInfo'
 import { ThreadTimeline } from './ThreadTimeline'
+import { DispatcherOverview } from './DispatcherOverview'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from '@tanstack/react-router'
 import type { JobStateChangedEvent } from '@/types/api'
@@ -337,6 +338,19 @@ export function SessionDetails({ sessionId, scenarioId, scenarioName }: SessionD
               </CardBody>
             </Card>
           )}
+        </Tab>
+        <Tab 
+          key="dispatchers" 
+          title={
+            <div className="flex items-center gap-2">
+              <FiLayers />
+              <span>Dispatchers</span>
+            </div>
+          }
+        >
+          <div className="py-4">
+            <DispatcherOverview sessionId={sessionId} />
+          </div>
         </Tab>
       </Tabs>
     </div>
