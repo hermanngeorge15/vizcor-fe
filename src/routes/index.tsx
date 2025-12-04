@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Button, Card, CardBody, CardHeader } from '@heroui/react'
-import { FiPlay, FiLayers, FiActivity } from 'react-icons/fi'
+import { FiPlay, FiLayers, FiActivity, FiLock } from 'react-icons/fi'
 import { Layout } from '@/components/Layout'
 import { useSessions } from '@/hooks/use-sessions'
 
@@ -20,7 +20,7 @@ function HomePage() {
           <p className="mx-auto max-w-2xl text-xl text-default-600">
             Real-time visualization of Kotlin coroutine lifecycle, hierarchy, and execution flow
           </p>
-          <div className="mt-8 flex items-center justify-center gap-4">
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link to="/sessions">
               <Button color="primary" size="lg" startContent={<FiLayers />}>
                 View Sessions
@@ -31,11 +31,16 @@ function HomePage() {
                 Run Scenarios
               </Button>
             </Link>
+            <Link to="/sync">
+              <Button color="danger" size="lg" variant="flat" startContent={<FiLock />}>
+                Sync Visualizer
+              </Button>
+            </Link>
           </div>
         </div>
 
         {/* Features */}
-        <div className="mb-12 grid gap-6 md:grid-cols-3">
+        <div className="mb-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader>
               <FiActivity className="mr-2 h-6 w-6" />
@@ -71,6 +76,20 @@ function HomePage() {
               </p>
             </CardBody>
           </Card>
+
+          <Link to="/sync">
+            <Card isPressable isHoverable className="h-full border-2 border-danger/30 hover:border-danger">
+              <CardHeader>
+                <FiLock className="mr-2 h-6 w-6 text-danger" />
+                <h3 className="text-lg font-semibold">Sync Visualizer</h3>
+              </CardHeader>
+              <CardBody>
+                <p className="text-default-600">
+                  Visualize Mutex & Semaphore with real-time animations
+                </p>
+              </CardBody>
+            </Card>
+          </Link>
         </div>
 
         {/* Recent Sessions */}

@@ -216,6 +216,18 @@ export interface PaginatedEventsResponse {
   total: number
 }
 
+// Re-export sync types for convenience
+export type {
+  MutexState,
+  SemaphoreState,
+  MutexEvent,
+  SemaphoreEvent,
+  DeadlockEvent,
+  SyncEvent,
+  SyncScenario,
+  SyncScenarioResponse
+} from './sync'
+
 // API Response types
 export interface CreateSessionResponse {
   sessionId: string

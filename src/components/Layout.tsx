@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Navbar, NavbarBrand, NavbarContent, NavbarItem, Button } from '@heroui/react'
-import { FiActivity } from 'react-icons/fi'
+import { FiActivity, FiLock } from 'react-icons/fi'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -40,6 +40,19 @@ export function Layout({ children }: LayoutProps) {
               {({ isActive }) => (
                 <Button variant={isActive ? 'flat' : 'light'} color={isActive ? 'primary' : 'default'}>
                   Scenarios
+                </Button>
+              )}
+            </Link>
+          </NavbarItem>
+          <NavbarItem>
+            <Link to="/sync">
+              {({ isActive }) => (
+                <Button 
+                  variant={isActive ? 'flat' : 'light'} 
+                  color={isActive ? 'danger' : 'default'}
+                  startContent={<FiLock className="h-4 w-4" />}
+                >
+                  Sync
                 </Button>
               )}
             </Link>
