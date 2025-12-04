@@ -386,3 +386,4 @@ function ScenarioCard({ scenario, onSelect, loading, color }: ScenarioCardProps)
 
 export default SyncDashboard
 
+
