@@ -97,6 +97,7 @@ export type VizEventKind =
   | 'JobCancellationRequested'
   | 'JobJoinRequested'
   | 'JobJoinCompleted'
+  | 'WaitingForChildren'
 
 export interface BaseVizEvent {
   sessionId: string
@@ -136,6 +137,13 @@ export interface JobJoinRequestedEvent extends CoroutineEvent {
 export interface JobJoinCompletedEvent extends CoroutineEvent {
   kind: 'JobJoinCompleted'
   waitingCoroutineId: string | null
+}
+
+// Structured Concurrency event
+export interface WaitingForChildrenEvent extends CoroutineEvent {
+  kind: 'WaitingForChildren'
+  activeChildrenCount: number
+  activeChildrenIds: string[]
 }
 
 // Dispatcher-related events
@@ -178,6 +186,7 @@ export type VizEvent =
   | JobCancellationRequestedEvent
   | JobJoinRequestedEvent
   | JobJoinCompletedEvent
+  | WaitingForChildrenEvent
   | DispatcherSelectedEvent
   | ThreadAssignedEvent
   | DeferredValueAvailableEvent
@@ -245,6 +254,9 @@ export interface HierarchyNode {
   dispatcherId?: string | null
   dispatcherName?: string | null
   jobId: string
+  // Structured concurrency tracking
+  activeChildrenIds?: string[]
+  activeChildrenCount?: number
   // Additional metadata for enhanced visualization
   suspensionPoints?: SuspensionPoint[]
   activeTime?: number  // Total active time in nanos
