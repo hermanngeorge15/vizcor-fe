@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Card, CardBody, Chip, Input } from '@heroui/react'
+import { Card, CardBody, Chip, Input, Tooltip } from '@heroui/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type {
   VizEvent,
@@ -10,14 +10,71 @@ import type {
   ThreadAssignedEvent,
   DeferredValueAvailableEvent,
   DeferredAwaitStartedEvent,
-  DeferredAwaitCompletedEvent
+  DeferredAwaitCompletedEvent,
+  CoroutineSuspendedEvent
 } from '@/types/api'
 import { formatNanoTime, formatRelativeTime } from '@/lib/utils'
-import { FiSearch } from 'react-icons/fi'
+import { FiSearch, FiClock, FiServer, FiDatabase, FiMail, FiCloud, FiActivity } from 'react-icons/fi'
 import { DispatcherBadge } from './DispatcherBadge'
 
 interface EventsListProps {
   events: VizEvent[]
+}
+
+/**
+ * Parse a service label like "OrderService.processOrder" into parts
+ */
+function parseServiceLabel(label: string | null | undefined): { service: string; method: string; icon: React.ReactNode } | null {
+  if (!label) return null
+
+  // Check for common service patterns
+  const dotMatch = label.match(/^([A-Za-z]+(?:Service|Repository|Api|Client|Generator|Processor|Validator)?)\.([\w-]+)$/)
+
+  if (dotMatch) {
+    const [, service, method] = dotMatch
+    return {
+      service,
+      method,
+      icon: getServiceIcon(service)
+    }
+  }
+
+  return null
+}
+
+/**
+ * Get appropriate icon for service type
+ */
+function getServiceIcon(service: string): React.ReactNode {
+  const serviceLower = service.toLowerCase()
+
+  if (serviceLower.includes('email') || serviceLower.includes('sms') || serviceLower.includes('slack')) {
+    return <FiMail className="w-3 h-3" />
+  }
+  if (serviceLower.includes('database') || serviceLower.includes('repository')) {
+    return <FiDatabase className="w-3 h-3" />
+  }
+  if (serviceLower.includes('api') || serviceLower.includes('client')) {
+    return <FiCloud className="w-3 h-3" />
+  }
+  if (serviceLower.includes('s3') || serviceLower.includes('storage')) {
+    return <FiCloud className="w-3 h-3" />
+  }
+  if (serviceLower.includes('analytics')) {
+    return <FiActivity className="w-3 h-3" />
+  }
+
+  return <FiServer className="w-3 h-3" />
+}
+
+/**
+ * Format duration in milliseconds to human readable
+ */
+function formatDuration(ms: number): string {
+  if (ms < 1000) {
+    return `${ms}ms`
+  }
+  return `${(ms / 1000).toFixed(1)}s`
 }
 
 export function EventsList({ events }: EventsListProps) {
@@ -97,27 +154,86 @@ export function EventsList({ events }: EventsListProps) {
                           event.kind?.includes('failed') ? '⚠️' :
                           event.kind?.includes('cancelled') ? '🚫' :
                           event.kind?.includes('body-completed') ? '⏳' :
+                          event.kind?.includes('suspended') ? '💤' :
+                          event.kind?.includes('resumed') ? '▶️' :
                           undefined
                         }
                       >
                         {event.kind ?? 'unknown'}
                       </Chip>
-                      <div>
-                        <div className="font-semibold">
-                          {event.label || event.coroutineId}
-                        </div>
-                        <div className="text-xs text-default-500">
-                          Coroutine: {event.coroutineId}
-                          {event.parentCoroutineId && ` • Parent: ${event.parentCoroutineId}`}
+                      <div className="flex-1">
+                        {/* Enhanced service label display */}
+                        {(() => {
+                          const parsed = parseServiceLabel(event.label)
+                          if (parsed) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <Tooltip content={parsed.service}>
+                                  <Chip
+                                    size="sm"
+                                    variant="bordered"
+                                    startContent={parsed.icon}
+                                    className="cursor-help"
+                                  >
+                                    {parsed.service}
+                                  </Chip>
+                                </Tooltip>
+                                <span className="font-semibold text-primary">.{parsed.method}()</span>
+                              </div>
+                            )
+                          }
+                          return (
+                            <div className="font-semibold">
+                              {event.label || event.coroutineId}
+                            </div>
+                          )
+                        })()}
+                        <div className="text-xs text-default-500 mt-1">
+                          ID: <code className="font-mono">{event.coroutineId}</code>
+                          {event.parentCoroutineId && (
+                            <> • Parent: <code className="font-mono">{event.parentCoroutineId}</code></>
+                          )}
                         </div>
                       </div>
                     </div>
-                    <div className="text-right text-xs text-default-400">
+                    <div className="text-right text-xs text-default-400 flex flex-col items-end gap-1">
                       <div>{formatNanoTime(event.tsNanos)}</div>
-                      <div>{formatRelativeTime(event.tsNanos, baseTime)}</div>
+                      <Chip size="sm" variant="flat" color="default">
+                        {formatRelativeTime(event.tsNanos, baseTime)}
+                      </Chip>
                     </div>
                   </div>
                   
+                  {/* Suspension duration display */}
+                  {event.kind === 'coroutine.suspended' && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-2 flex items-center gap-3 rounded-md bg-secondary/10 px-3 py-2 text-xs"
+                    >
+                      <div className="flex items-center gap-1 text-secondary">
+                        <FiClock className="w-3 h-3" />
+                        <span className="font-semibold">Suspending</span>
+                      </div>
+                      {(event as CoroutineSuspendedEvent).suspensionPoint?.reason && (
+                        <Chip size="sm" variant="flat" color="secondary">
+                          {(event as CoroutineSuspendedEvent).suspensionPoint?.reason}
+                        </Chip>
+                      )}
+                      {(() => {
+                        const parsed = parseServiceLabel(event.label)
+                        if (parsed) {
+                          return (
+                            <span className="text-default-500">
+                              Waiting for {parsed.service} response...
+                            </span>
+                          )
+                        }
+                        return null
+                      })()}
+                    </motion.div>
+                  )}
+
                   {/* Add explanation for key events */}
                   {event.kind?.includes('body-completed') && (
                     <motion.div

@@ -16,29 +16,59 @@ const mockSessions: SessionInfo[] = [
 ]
 
 const mockScenarios: Scenario[] = [
+  // ========== REALISTIC SCENARIOS (Featured) ==========
+  {
+    id: 'order-processing',
+    name: '🛒 Order Processing',
+    description: 'E-commerce flow: validation → inventory check → payment → database → notifications (parallel). Use ?fail=true to simulate payment failure.',
+    endpoint: '/api/scenarios/order-processing',
+    category: 'realistic',
+    duration: '~15-20 seconds',
+  },
+  {
+    id: 'user-registration',
+    name: '👤 User Registration',
+    description: 'Complete registration: validation → DB check → create user → parallel setup (profile, settings, avatar) → notifications. Use ?failEmail=true to simulate email retry.',
+    endpoint: '/api/scenarios/user-registration',
+    category: 'realistic',
+    duration: '~18-25 seconds',
+  },
+  {
+    id: 'report-generation',
+    name: '📊 Report Generation',
+    description: 'Data pipeline: parallel API fetches → data aggregation → PDF generation → parallel delivery (S3, email, Slack). Use ?timeout=true to simulate API timeout.',
+    endpoint: '/api/scenarios/report-generation',
+    category: 'realistic',
+    duration: '~25-35 seconds',
+  },
+  // ========== BASIC SCENARIOS ==========
   {
     id: 'nested',
     name: 'Nested Coroutines',
     description: 'Demonstrates parent-child relationships and structured concurrency',
     endpoint: '/api/scenarios/nested',
+    category: 'basic',
   },
   {
     id: 'parallel',
     name: 'Parallel Execution',
     description: 'Multiple coroutines running in parallel',
     endpoint: '/api/scenarios/parallel',
+    category: 'basic',
   },
   {
     id: 'cancellation',
     name: 'Cancellation Propagation',
     description: 'Shows how cancellation propagates through coroutine hierarchy',
     endpoint: '/api/scenarios/cancellation',
+    category: 'basic',
   },
   {
     id: 'exception',
     name: 'Exception Handling',
     description: 'Demonstrates exception propagation and handling',
     endpoint: '/api/scenarios/exception',
+    category: 'basic',
   },
 ]
 
