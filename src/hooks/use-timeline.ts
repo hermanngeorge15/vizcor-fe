@@ -23,51 +23,6 @@ export function useCoroutineTimeline(sessionId: string | undefined, coroutineId:
 }
 
 /**
- * Get timeline events grouped by type
- */
-export function useTimelineEventGroups(sessionId: string | undefined, coroutineId: string | undefined) {
-  const { data: timeline } = useCoroutineTimeline(sessionId, coroutineId)
-
-  const groups = useMemo(() => {
-    if (!timeline?.events) {
-      return {
-        lifecycle: [] as TimelineEvent[],
-        suspension: [] as TimelineEvent[],
-        dispatcher: [] as TimelineEvent[],
-        thread: [] as TimelineEvent[],
-      }
-    }
-
-    const lifecycle: TimelineEvent[] = []
-    const suspension: TimelineEvent[] = []
-    const dispatcher: TimelineEvent[] = []
-    const thread: TimelineEvent[] = []
-
-    timeline.events.forEach(event => {
-      if (event.kind.startsWith('coroutine.')) {
-        lifecycle.push(event)
-        
-        if (event.kind === 'coroutine.suspended' || event.kind === 'coroutine.resumed') {
-          suspension.push(event)
-        }
-      }
-      
-      if (event.kind === 'DispatcherSelected') {
-        dispatcher.push(event)
-      }
-      
-      if (event.kind === 'thread.assigned') {
-        thread.push(event)
-      }
-    })
-
-    return { lifecycle, suspension, dispatcher, thread }
-  }, [timeline])
-
-  return groups
-}
-
-/**
  * Calculate timeline statistics
  */
 export function useTimelineStats(timeline: CoroutineTimeline | undefined) {

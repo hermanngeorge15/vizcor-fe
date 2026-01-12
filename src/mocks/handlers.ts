@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw'
+import { CoroutineState } from '@/types/api'
 import type { SessionInfo, SessionSnapshot, Scenario } from '@/types/api'
 import {
   generateCompleteScenario,
@@ -77,7 +78,7 @@ export const handlers = [
           parentId: null,
           scopeId: 'scope-1',
           label: 'parent',
-          state: 'COMPLETED' as any,
+          state: CoroutineState.COMPLETED,
         },
         {
           id: 'coro-2',
@@ -85,7 +86,7 @@ export const handlers = [
           parentId: 'coro-1',
           scopeId: 'scope-1',
           label: 'child-1',
-          state: 'COMPLETED' as any,
+          state: CoroutineState.COMPLETED,
         },
         {
           id: 'coro-3',
@@ -93,7 +94,7 @@ export const handlers = [
           parentId: 'coro-2',
           scopeId: 'scope-1',
           label: 'child-1-1',
-          state: 'COMPLETED' as any,
+          state: CoroutineState.COMPLETED,
         },
       ],
     }

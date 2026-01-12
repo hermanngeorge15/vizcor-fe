@@ -1,7 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Card, CardBody, Chip, Input } from '@heroui/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { VizEvent } from '@/types/api'
+import type {
+  VizEvent,
+  JobStateChangedEvent,
+  JobCancellationRequestedEvent,
+  JobJoinRequestedEvent,
+  DispatcherSelectedEvent,
+  ThreadAssignedEvent,
+  DeferredValueAvailableEvent,
+  DeferredAwaitStartedEvent,
+  DeferredAwaitCompletedEvent
+} from '@/types/api'
 import { formatNanoTime, formatRelativeTime } from '@/lib/utils'
 import { FiSearch } from 'react-icons/fi'
 import { DispatcherBadge } from './DispatcherBadge'
@@ -19,8 +29,8 @@ export function EventsList({ events }: EventsListProps) {
     const lower = filter.toLowerCase()
     return events.filter(
       e =>
-        e.kind.toLowerCase().includes(lower) ||
-        e.coroutineId.toLowerCase().includes(lower) ||
+        e.kind?.toLowerCase().includes(lower) ||
+        e.coroutineId?.toLowerCase().includes(lower) ||
         e.label?.toLowerCase().includes(lower)
     )
   }, [events, filter])
@@ -64,11 +74,11 @@ export function EventsList({ events }: EventsListProps) {
               <Card 
                 shadow="sm"
                 className={
-                  event.kind.includes('failed')
+                  event.kind?.includes('failed')
                     ? 'border-l-4 border-danger'
-                    : event.kind.includes('cancelled')
+                    : event.kind?.includes('cancelled')
                     ? 'border-l-4 border-warning'
-                    : event.kind.includes('body-completed')
+                    : event.kind?.includes('body-completed')
                     ? 'border-l-4 border-primary/50'
                     : ''
                 }
@@ -81,16 +91,16 @@ export function EventsList({ events }: EventsListProps) {
                       </div>
                       <Chip
                         size="sm"
-                        color={getEventColor(event.kind)}
+                        color={getEventColor(event.kind ?? '')}
                         variant="flat"
                         startContent={
-                          event.kind.includes('failed') ? '⚠️' :
-                          event.kind.includes('cancelled') ? '🚫' :
-                          event.kind.includes('body-completed') ? '⏳' :
+                          event.kind?.includes('failed') ? '⚠️' :
+                          event.kind?.includes('cancelled') ? '🚫' :
+                          event.kind?.includes('body-completed') ? '⏳' :
                           undefined
                         }
                       >
-                        {event.kind}
+                        {event.kind ?? 'unknown'}
                       </Chip>
                       <div>
                         <div className="font-semibold">
@@ -109,7 +119,7 @@ export function EventsList({ events }: EventsListProps) {
                   </div>
                   
                   {/* Add explanation for key events */}
-                  {event.kind.includes('body-completed') && (
+                  {event.kind?.includes('body-completed') && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
@@ -119,7 +129,7 @@ export function EventsList({ events }: EventsListProps) {
                     </motion.div>
                   )}
                   
-                  {event.kind.includes('failed') && (
+                  {event.kind?.includes('failed') && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
@@ -129,7 +139,7 @@ export function EventsList({ events }: EventsListProps) {
                     </motion.div>
                   )}
                   
-                  {event.kind.includes('cancelled') && event.parentCoroutineId && (
+                  {event.kind?.includes('cancelled') && event.parentCoroutineId && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
@@ -140,16 +150,16 @@ export function EventsList({ events }: EventsListProps) {
                   )}
                   
                   {/* Job-related event explanations */}
-                  {event.kind === 'JobStateChanged' && 'childrenCount' in event && (
+                  {event.kind === 'JobStateChanged' && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-2 rounded-md bg-secondary/10 px-3 py-2 text-xs text-secondary"
                     >
-                      Job State: {(event as any).isActive ? '🟢 Active' : '⚫ Inactive'} | 
-                      {(event as any).isCompleted ? ' ✅ Completed' : ''} 
-                      {(event as any).isCancelled ? ' 🚫 Cancelled' : ''} | 
-                      Children: {(event as any).childrenCount}
+                      Job State: {(event as JobStateChangedEvent).isActive ? '🟢 Active' : '⚫ Inactive'} |
+                      {(event as JobStateChangedEvent).isCompleted ? ' ✅ Completed' : ''}
+                      {(event as JobStateChangedEvent).isCancelled ? ' 🚫 Cancelled' : ''} |
+                      Children: {(event as JobStateChangedEvent).childrenCount}
                     </motion.div>
                   )}
                   
@@ -160,10 +170,10 @@ export function EventsList({ events }: EventsListProps) {
                       className="mt-2 rounded-md bg-warning/10 px-3 py-2 text-xs text-warning"
                     >
                       🚫 Cancellation requested
-                      {'requestedBy' in event && (event as any).requestedBy && 
-                        ` by ${(event as any).requestedBy}`}
-                      {'cause' in event && (event as any).cause && 
-                        `: ${(event as any).cause}`}
+                      {(event as JobCancellationRequestedEvent).requestedBy &&
+                        ` by ${(event as JobCancellationRequestedEvent).requestedBy}`}
+                      {(event as JobCancellationRequestedEvent).cause &&
+                        `: ${(event as JobCancellationRequestedEvent).cause}`}
                     </motion.div>
                   )}
                   
@@ -174,8 +184,8 @@ export function EventsList({ events }: EventsListProps) {
                       className="mt-2 rounded-md bg-primary/10 px-3 py-2 text-xs text-primary"
                     >
                       ⏳ Waiting for job to complete
-                      {'waitingCoroutineId' in event && (event as any).waitingCoroutineId && 
-                        ` (caller: ${(event as any).waitingCoroutineId})`}
+                      {(event as JobJoinRequestedEvent).waitingCoroutineId &&
+                        ` (caller: ${(event as JobJoinRequestedEvent).waitingCoroutineId})`}
                     </motion.div>
                   )}
                   
@@ -190,67 +200,67 @@ export function EventsList({ events }: EventsListProps) {
                   )}
                   
                   {/* Dispatcher events */}
-                  {event.kind === 'DispatcherSelected' && 'dispatcherName' in event && (
+                  {event.kind === 'DispatcherSelected' && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-2 flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-xs"
                     >
                       <span className="text-primary">🎯 Dispatcher selected:</span>
-                      <DispatcherBadge dispatcherName={(event as any).dispatcherName} />
+                      <DispatcherBadge dispatcherName={(event as DispatcherSelectedEvent).dispatcherName} />
                       <span className="text-default-500 font-mono text-xs">
-                        ID: {(event as any).dispatcherId}
+                        ID: {(event as DispatcherSelectedEvent).dispatcherId}
                       </span>
                     </motion.div>
                   )}
                   
-                  {event.kind === 'thread.assigned' && 'threadName' in event && (
+                  {event.kind === 'thread.assigned' && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-2 flex items-center gap-2 rounded-md bg-success/10 px-3 py-2 text-xs"
                     >
                       <span className="text-success">🧵 Thread assigned:</span>
-                      <code className="font-mono text-xs">{(event as any).threadName}</code>
-                      {'dispatcherName' in event && (event as any).dispatcherName && (
+                      <code className="font-mono text-xs">{(event as ThreadAssignedEvent).threadName}</code>
+                      {(event as ThreadAssignedEvent).dispatcherName && (
                         <>
                           <span className="text-default-500">on</span>
-                          <DispatcherBadge dispatcherName={(event as any).dispatcherName} />
+                          <DispatcherBadge dispatcherName={(event as ThreadAssignedEvent).dispatcherName} />
                         </>
                       )}
                     </motion.div>
                   )}
                   
                   {/* Async/Deferred events */}
-                  {event.kind === 'DeferredValueAvailable' && 'deferredId' in event && (
+                  {event.kind === 'DeferredValueAvailable' && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-2 rounded-md bg-success/10 px-3 py-2 text-xs text-success"
                     >
-                      ✅ Async result available: {(event as any).deferredId}
+                      ✅ Async result available: {(event as DeferredValueAvailableEvent).deferredId}
                     </motion.div>
                   )}
-                  
-                  {event.kind === 'DeferredAwaitStarted' && 'deferredId' in event && (
+
+                  {event.kind === 'DeferredAwaitStarted' && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-2 rounded-md bg-warning/10 px-3 py-2 text-xs text-warning"
                     >
-                      ⏳ Awaiting async result: {(event as any).deferredId}
+                      ⏳ Awaiting async result: {(event as DeferredAwaitStartedEvent).deferredId}
                       {' by '}
-                      {(event as any).awaitingCoroutineId}
+                      {(event as DeferredAwaitStartedEvent).awaitingCoroutineId}
                     </motion.div>
                   )}
-                  
-                  {event.kind === 'DeferredAwaitCompleted' && 'deferredId' in event && (
+
+                  {event.kind === 'DeferredAwaitCompleted' && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       className="mt-2 rounded-md bg-success/10 px-3 py-2 text-xs text-success"
                     >
-                      ✅ Await completed: {(event as any).deferredId}
+                      ✅ Await completed: {(event as DeferredAwaitCompletedEvent).deferredId}
                     </motion.div>
                   )}
                 </CardBody>

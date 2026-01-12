@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { 
-  HierarchyNode, 
-  VizEvent, 
-  WaitingForChildrenEvent, 
+import {
+  HierarchyNode,
+  VizEvent,
+  WaitingForChildrenEvent,
   JobStateChangedEvent,
-  CoroutineState 
+  ThreadAssignedEvent,
+  DispatcherSelectedEvent,
+  CoroutineState
 } from '../types/api'
 
 /**
@@ -191,7 +193,7 @@ export function useEnhancedHierarchy(
         }
 
         case 'thread.assigned': {
-          const threadEvent = event as any // ThreadAssignedEvent
+          const threadEvent = event as ThreadAssignedEvent
           const node = newNodes.get(event.coroutineId)
           if (node) {
             newNodes.set(event.coroutineId, {
@@ -204,7 +206,7 @@ export function useEnhancedHierarchy(
         }
 
         case 'DispatcherSelected': {
-          const dispatcherEvent = event as any // DispatcherSelectedEvent
+          const dispatcherEvent = event as DispatcherSelectedEvent
           const node = newNodes.get(event.coroutineId)
           if (node) {
             newNodes.set(event.coroutineId, {

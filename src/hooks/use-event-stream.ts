@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import type { VizEvent } from '@/types/api'
+import { normalizeEvent } from '@/lib/utils'
+import type { VizEvent, VizEventKind } from '@/types/api'
 
 export function useEventStream(sessionId: string | undefined, enabled = true) {
   const [events, setEvents] = useState<VizEvent[]>([])
@@ -34,8 +35,29 @@ export function useEventStream(sessionId: string | undefined, enabled = true) {
         setError('Connection lost')
       }
 
-      // Listen for all event types
+      // Listen for all event types - both backend format (PascalCase) and frontend format (kebab-case)
+      // Backend sends: CoroutineCreated, CoroutineStarted, etc.
+      // Frontend expects: coroutine.created, coroutine.started, etc.
       const eventTypes = [
+        // Backend PascalCase format
+        'CoroutineCreated',
+        'CoroutineStarted',
+        'CoroutineSuspended',
+        'CoroutineResumed',
+        'CoroutineBodyCompleted',
+        'CoroutineCompleted',
+        'CoroutineCancelled',
+        'CoroutineFailed',
+        'ThreadAssigned',
+        'DispatcherSelected',
+        'DeferredValueAvailable',
+        'DeferredAwaitStarted',
+        'DeferredAwaitCompleted',
+        'JobStateChanged',
+        'JobCancellationRequested',
+        'JobJoinRequested',
+        'JobJoinCompleted',
+        // Frontend kebab-case format (for backwards compatibility)
         'coroutine.created',
         'coroutine.started',
         'coroutine.suspended',
@@ -45,23 +67,25 @@ export function useEventStream(sessionId: string | undefined, enabled = true) {
         'coroutine.cancelled',
         'coroutine.failed',
         'thread.assigned',
-        'JobStateChanged',
-        'JobCancellationRequested',
-        'JobJoinRequested',
-        'JobJoinCompleted',
       ]
 
       eventTypes.forEach(eventType => {
         eventSource?.addEventListener(eventType, (e: Event) => {
           const messageEvent = e as MessageEvent
           try {
-            const event: VizEvent = JSON.parse(messageEvent.data)
+            const rawEvent = JSON.parse(messageEvent.data)
+            // Normalize event from backend format (type -> kind)
+            const event = normalizeEvent(rawEvent)
+            // If still no kind, set from SSE event type
+            if (!event.kind) {
+              (event as any).kind = eventType as VizEventKind
+            }
             setEvents(prev => [...prev, event])
             
             // Invalidate session queries to update UI
             queryClient.invalidateQueries({ queryKey: ['sessions', sessionId] })
-          } catch (err) {
-            console.error('Failed to parse event:', err)
+          } catch {
+            // Silently ignore malformed events
           }
         })
       })

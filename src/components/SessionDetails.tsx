@@ -96,8 +96,8 @@ export function SessionDetails({ sessionId, scenarioId, scenarioName }: SessionD
       await runScenario.mutateAsync({ scenarioId, sessionId })
       // Refetch immediately after running
       setTimeout(() => refetch(), 500)
-    } catch (error) {
-      console.error('Failed to run scenario:', error)
+    } catch {
+      // Error is handled by the mutation's error state
     }
   }
 
@@ -116,8 +116,8 @@ export function SessionDetails({ sessionId, scenarioId, scenarioName }: SessionD
       } else {
         navigate({ to: '/sessions' })
       }
-    } catch (error) {
-      console.error('Failed to reset session:', error)
+    } catch {
+      // Error is handled by the mutation's error state
     }
   }
 

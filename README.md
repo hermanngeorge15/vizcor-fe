@@ -20,11 +20,15 @@ See [TECH_STACK.MD](./TECH_STACK.MD) for the complete technology overview.
 ### Prerequisites
 
 - Node.js >= 24.0.0
-- pnpm >= 9.0.0
+- pnpm >= 9.0.0 (preferred; the repo ships a `pnpm-lock.yaml`)
+- npm >= 10.0.0 works if you cannot use pnpm (will ignore the pnpm lock)
 
-### Installation
+### Installation (pnpm, recommended)
 
 ```bash
+# Ensure pnpm is available (Node ships with Corepack)
+corepack enable pnpm
+
 # Install dependencies
 pnpm install
 
@@ -36,6 +40,17 @@ pnpm build
 
 # Preview production build
 pnpm preview
+```
+
+### Installation (npm fallback)
+
+You can use npm if pnpm is unavailable; versions may differ from the lockfile.
+
+```bash
+npm install
+npm run dev       # start development server
+npm run build     # production build
+npm run preview   # preview the build
 ```
 
 ## Project Structure
@@ -96,6 +111,16 @@ src/
 - Run pre-built coroutine scenarios
 - Configure parameters (e.g., nesting depth)
 - Automatically navigate to session results
+
+## How It Works
+
+- **App bootstrap:** `src/main.tsx` wires the HeroUI theme, TanStack Query client (`src/lib/query-client.ts`), and TanStack Router (generated `src/routeTree.gen.ts`) before mounting React.
+- **Routing:** File-based routes in `src/routes` cover `/` (landing), `/sessions` (list/create/delete sessions), `/sessions/:sessionId` (session detail), `/scenarios` (catalog), and `/scenarios/builder` (custom scenario builder). `src/components/Layout.tsx` renders the shared navbar and shell.
+- **Data layer:** `src/lib/api-client.ts` wraps all `/api` calls: session CRUD + snapshots, event history/pagination, SSE stream creation, scenarios (prebuilt + custom), thread activity, dispatchers, hierarchies, and timelines. React Query hooks (`src/hooks/use-sessions.ts`, `use-scenarios.ts`, `use-thread-activity.ts`) handle caching, refetch intervals, and invalidation after mutations.
+- **Live updates:** `src/hooks/use-event-stream.ts` opens an `EventSource` to `/api/sessions/:id/stream`, normalizes backend event types, and invalidates the session query when new events arrive. Session detail can toggle between stored events and live SSE events.
+- **Session detail experience:** `src/components/SessionDetails.tsx` orchestrates the page—scenario controls, live stream toggle, graph vs list views (`CoroutineTreeGraph` for pan/zoom, `CoroutineTree` for a compact tree), job state chips, event timeline (`EventsList`), thread timelines, and dispatcher cards. Scenario runs call `useRunScenario`, and deletions reset navigation.
+- **Scenarios:** `/scenarios` lists backend-provided scenarios and creates a fresh session before navigating to `/sessions/:id` with scenario metadata. `/scenarios/builder` uses `src/components/ScenarioBuilder.tsx` to compose coroutine hierarchies and actions, POSTs to `/api/scenarios/custom`, and jumps to the resulting session.
+- **Styling & UX:** Tailwind + HeroUI drive theming; Framer Motion animates tree nodes/status chips; `react-zoom-pan-pinch` enables pan/zoom on the graph view.
 
 ## API Integration
 
@@ -178,4 +203,3 @@ The app uses Tailwind CSS with the HeroUI component library:
 ## License
 
 MIT
-

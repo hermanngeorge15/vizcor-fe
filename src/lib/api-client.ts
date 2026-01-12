@@ -13,6 +13,7 @@ import type {
   PaginatedEventsRequest,
   PaginatedEventsResponse,
 } from '@/types/api'
+import { normalizeEvents, normalizeEvent } from './utils'
 
 const API_BASE_URL = '/api'
 
@@ -64,7 +65,9 @@ class ApiClient {
     
     const query = params.toString()
     const url = `/sessions/${sessionId}/events${query ? `?${query}` : ''}`
-    return this.fetchJson<VizEvent[]>(url)
+    const events = await this.fetchJson<any[]>(url)
+    // Normalize events from backend format (type -> kind)
+    return normalizeEvents(events)
   }
 
   async getSessionEventsPaginated(options: PaginatedEventsRequest): Promise<PaginatedEventsResponse> {
@@ -81,7 +84,12 @@ class ApiClient {
     
     const query = params.toString()
     const url = `/sessions/${options.sessionId}/events${query ? `?${query}` : ''}`
-    return this.fetchJson<PaginatedEventsResponse>(url)
+    const response = await this.fetchJson<any>(url)
+    // Normalize events from backend format (type -> kind)
+    return {
+      ...response,
+      events: normalizeEvents(response.events || [])
+    }
   }
 
   // SSE Stream
