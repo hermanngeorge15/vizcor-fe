@@ -8,7 +8,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import { useMemo } from 'react'
-import type { CoroutineTimeline, TimelineEvent } from '@/types/api'
+import type { CoroutineTimeline } from '@/types/api'
 
 /**
  * Fetch timeline for a specific coroutine
@@ -140,7 +140,7 @@ export function useTimelineVisualizationData(timeline: CoroutineTimeline | undef
       metadata?: any
     }> = []
 
-    timeline.events.forEach((event, index) => {
+    timeline.events.forEach((event, _index) => {
       const relativeTime = event.timestamp - baseTime
 
       let state: 'active' | 'suspended' | 'transition' = 'transition'

@@ -13,7 +13,7 @@ import type {
   PaginatedEventsRequest,
   PaginatedEventsResponse,
 } from '@/types/api'
-import { normalizeEvents, normalizeEvent } from './utils'
+import { normalizeEvents } from './utils'
 
 const API_BASE_URL = '/api'
 

@@ -67,16 +67,6 @@ function getServiceIcon(service: string): React.ReactNode {
   return <FiServer className="w-3 h-3" />
 }
 
-/**
- * Format duration in milliseconds to human readable
- */
-function formatDuration(ms: number): string {
-  if (ms < 1000) {
-    return `${ms}ms`
-  }
-  return `${(ms / 1000).toFixed(1)}s`
-}
-
 export function EventsList({ events }: EventsListProps) {
   const [filter, setFilter] = useState('')
 

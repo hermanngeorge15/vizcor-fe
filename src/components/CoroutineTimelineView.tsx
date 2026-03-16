@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader, Chip, Progress } from '@heroui/react'
+import { Card, CardBody, CardHeader, Chip } from '@heroui/react'
 import { useCoroutineTimeline, useTimelineStats, useSuspensionPoints } from '@/hooks/use-timeline'
 import { formatNanoTime } from '@/lib/utils'
 import { FiClock, FiActivity, FiPause, FiCpu, FiMapPin } from 'react-icons/fi'

@@ -3,8 +3,6 @@ import { CoroutineState } from '@/types/api'
 import type { SessionInfo, SessionSnapshot, Scenario } from '@/types/api'
 import {
   generateCompleteScenario,
-  generateMockHierarchyTree,
-  generateMockThreadActivity,
   generateMockCoroutineTimeline,
   hierarchyTreeToList,
 } from './mock-data'
@@ -198,7 +196,7 @@ export const handlers = [
 
   // Get timeline for specific coroutine
   http.get('/api/sessions/:sessionId/coroutines/:coroutineId/timeline', ({ params }) => {
-    const { sessionId, coroutineId } = params
+    const { coroutineId } = params
     const timeline = generateMockCoroutineTimeline(coroutineId as string, 12)
     
     return HttpResponse.json(timeline)
@@ -209,7 +207,6 @@ export const handlers = [
     const url = new URL(request.url)
     const sinceStep = url.searchParams.get('sinceStep')
     const limit = url.searchParams.get('limit')
-    const filter = url.searchParams.get('filter')
 
     // For now, return empty events array
     // In real implementation, this would return filtered/paginated events

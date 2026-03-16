@@ -16,7 +16,6 @@ import type {
   TimelineEvent,
   SuspensionPoint,
   CoroutineState,
-  VizEvent,
 } from '@/types/api'
 
 // ============================================================================
@@ -233,7 +232,7 @@ export function generateMockTimelineEvent(
 
 export function generateMockCoroutineTimeline(
   coroutineId: string,
-  eventCount: number = 10
+  _eventCount: number = 10
 ): CoroutineTimeline {
   const baseTime = Date.now() * 1_000_000
   const events: TimelineEvent[] = []
