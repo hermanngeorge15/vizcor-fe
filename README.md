@@ -14,6 +14,8 @@ See [TECH_STACK.MD](./TECH_STACK.MD) for the complete technology overview.
 - **HeroUI** - Beautiful component library
 - **Tailwind CSS** - Utility-first styling
 - **Framer Motion** - Smooth animations
+- **react-zoom-pan-pinch** - Interactive graph pan/zoom
+- **MSW** - API mocking for offline development
 
 ## Getting Started
 
@@ -22,6 +24,7 @@ See [TECH_STACK.MD](./TECH_STACK.MD) for the complete technology overview.
 - Node.js >= 24.0.0
 - pnpm >= 9.0.0 (preferred; the repo ships a `pnpm-lock.yaml`)
 - npm >= 10.0.0 works if you cannot use pnpm (will ignore the pnpm lock)
+- **Backend running on port 8080** (requests are proxied automatically via Vite)
 
 ### Installation (pnpm, recommended)
 
@@ -53,37 +56,76 @@ npm run build     # production build
 npm run preview   # preview the build
 ```
 
+Open http://localhost:3000 after starting the dev server.
+
 ## Project Structure
 
 ```
 src/
-├── components/          # Reusable UI components
-│   ├── Layout.tsx
-│   ├── SessionDetails.tsx
-│   ├── CoroutineTree.tsx
-│   ├── EventsList.tsx
-│   └── ...
-├── hooks/              # Custom React hooks
-│   ├── use-sessions.ts
-│   ├── use-scenarios.ts
-│   └── use-event-stream.ts
-├── lib/                # Utilities and client libraries
-│   ├── api-client.ts
-│   ├── query-client.ts
-│   └── utils.ts
-├── routes/             # File-based routing (TanStack Router)
-│   ├── __root.tsx
-│   ├── index.tsx
+├── components/                     # React components
+│   ├── Layout.tsx                  # Main layout with navbar (Home, Sessions, Scenarios)
+│   ├── SessionDetails.tsx          # Session detail view with tabbed interface
+│   ├── CreateSessionForm.tsx       # Session creation form
+│   ├── CoroutineTree.tsx           # List-based tree view with state icons
+│   ├── CoroutineTreeGraph.tsx      # Interactive graph view with pan/zoom
+│   ├── CoroutineNodeEnhanced.tsx   # Enhanced node rendering
+│   ├── EnhancedCoroutineTreeNode.tsx
+│   ├── EventsList.tsx              # Live event feed with type filtering
+│   ├── CoroutineTimelineView.tsx   # Timeline visualization
+│   ├── ThreadLanesView.tsx         # Horizontal thread activity lanes
+│   ├── ThreadTimeline.tsx          # Thread-level event timeline
+│   ├── DispatcherOverview.tsx      # Dispatcher cards (pool size, queue depth)
+│   ├── DispatcherBadge.tsx         # Reusable dispatcher badge
+│   ├── JobStateDisplay.tsx         # Job state from JobStateChanged events
+│   ├── JobStatusDisplay.tsx        # Job status indicators
+│   ├── JobInfoCard.tsx             # Detailed job information card
+│   ├── StateIndicator.tsx          # State visualization helper
+│   ├── ScenarioBuilder.tsx         # Custom scenario builder UI
+│   ├── ScenarioForm.tsx            # Scenario configuration form
+│   ├── StructuredConcurrencyInfo.tsx  # Structured concurrency info
+│   ├── WaitingIndicator.tsx        # Waiting-for-children indicator
+│   ├── EmptyState.tsx              # Empty state placeholder
+│   ├── ErrorAlert.tsx              # Error message display
+│   └── LoadingSpinner.tsx          # Loading indicator
+├── hooks/                          # Custom React hooks
+│   ├── use-sessions.ts             # Session CRUD + events
+│   ├── use-scenarios.ts            # Scenario list + run mutations
+│   ├── use-event-stream.ts         # SSE connection management
+│   ├── use-hierarchy.ts            # Coroutine hierarchy, tree, stats
+│   ├── use-enhanced-hierarchy.ts   # Hierarchy with suspension/timing data
+│   └── use-thread-activity.ts      # Thread lanes, utilization, dispatcher grouping
+├── lib/                            # Utilities and client libraries
+│   ├── api-client.ts               # REST + SSE API client
+│   ├── query-client.ts             # TanStack Query config (30s stale, 1 retry)
+│   └── utils.ts                    # cn() class merge (clsx + tailwind-merge)
+├── routes/                         # File-based routing (TanStack Router)
+│   ├── __root.tsx                  # Root layout + error/404 handling
+│   ├── index.tsx                   # Home / dashboard
 │   ├── sessions/
+│   │   ├── index.tsx               # Session list
+│   │   └── $sessionId.tsx          # Session detail (tabbed)
 │   └── scenarios/
-├── types/              # TypeScript type definitions
-│   └── api.ts
-├── mocks/              # MSW mock handlers
-│   ├── browser.ts
-│   └── handlers.ts
-├── main.tsx            # Application entry point
-└── index.css           # Global styles
+│       ├── index.tsx               # Scenario catalog
+│       └── builder.tsx             # Custom scenario builder
+├── types/
+│   └── api.ts                      # TypeScript types matching backend DTOs
+├── mocks/                          # MSW mock handlers
+│   ├── browser.ts                  # Worker setup
+│   ├── handlers.ts                 # Mock API endpoints
+│   └── mock-data.ts                # Mock data generators
+├── main.tsx                        # Application entry point
+└── index.css                       # Global styles
 ```
+
+## Routes
+
+| Path | Page | Description |
+|------|------|-------------|
+| `/` | Home | Dashboard / hero section |
+| `/sessions` | Sessions | List, create, and delete visualization sessions |
+| `/sessions/:sessionId` | Session Detail | Tabbed view: Visualization, Job States, Events, Threads, Dispatchers |
+| `/scenarios` | Scenarios | Browse and run pre-built scenarios |
+| `/scenarios/builder` | Builder | Compose custom coroutine scenarios via UI |
 
 ## Features
 
@@ -97,20 +139,28 @@ src/
 - Live updates as coroutines are created, started, and completed
 - Visual indicators for connection status
 
-### 3. Coroutine Tree Visualization
-- Hierarchical view of parent-child relationships
-- Color-coded states (Created, Active, Completed, Cancelled)
-- Animated transitions for better UX
+### 3. Coroutine Visualization
+- **Tree view** - Hierarchical list with state icons, animated badges, job property display
+- **Graph view** - Interactive pan/zoom graph of coroutine topology
+- Color-coded states: Created, Active, Suspended, Waiting-for-Children, Completed, Cancelled, Failed
+- Shake animations for failed/cancelled, pulse for active/waiting
 
-### 4. Event Timeline
+### 4. Thread & Dispatcher Tracking
+- Horizontal lane view showing per-thread activity segments
+- Dispatcher cards with thread pool size, thread IDs, and queue depth warnings
+- Utilization statistics grouped by dispatcher (Default, IO, Main, Unconfined)
+
+### 5. Event Timeline
 - Chronological list of all coroutine events
-- Filter events by coroutine ID or event type
-- Relative timestamps for easy comparison
+- Filter events by type with search box
+- Service icon parsing (OrderService, UserRepository, etc.)
+- Dispatcher badge integration
+- Expandable event details
 
-### 5. Scenario Execution
-- Run pre-built coroutine scenarios
-- Configure parameters (e.g., nesting depth)
-- Automatically navigate to session results
+### 6. Scenario Execution
+- Run pre-built coroutine scenarios (realistic + basic)
+- Custom scenario builder with coroutine hierarchy and action composition
+- Automatically creates a session and navigates to results
 
 ## How It Works
 
@@ -124,17 +174,48 @@ src/
 
 ## API Integration
 
-The frontend connects to the backend API at `http://localhost:8080/api`:
+All requests go through Vite's dev proxy (`/api` -> `http://localhost:8080`). No CORS configuration needed in development.
 
-- `GET /api/sessions` - List all sessions
-- `POST /api/sessions` - Create new session
-- `GET /api/sessions/:id` - Get session details
-- `DELETE /api/sessions/:id` - Delete session
-- `GET /api/sessions/:id/stream` - SSE event stream
-- `GET /api/scenarios` - List available scenarios
-- `POST /api/scenarios/:id` - Run scenario
+| Method | Endpoint | Hook | Description |
+|--------|----------|------|-------------|
+| `GET` | `/api/sessions` | `useSessions()` | List all sessions |
+| `POST` | `/api/sessions` | `useCreateSession()` | Create new session |
+| `GET` | `/api/sessions/:id` | `useSession(id)` | Get session snapshot |
+| `DELETE` | `/api/sessions/:id` | `useDeleteSession()` | Delete session |
+| `GET` | `/api/sessions/:id/events` | `useSessionEvents(id)` | Stored events (paginated) |
+| `GET` | `/api/sessions/:id/stream` | `useEventStream(id)` | SSE real-time stream |
+| `GET` | `/api/sessions/:id/hierarchy` | `useHierarchy(id)` | Coroutine hierarchy |
+| `GET` | `/api/sessions/:id/threads` | `useThreadActivity(id)` | Thread activity (auto-refresh 2s) |
+| `GET` | `/api/scenarios` | `useScenarios()` | List available scenarios |
+| `POST` | `/api/scenarios/:id` | `useRunScenario()` | Run scenario |
+| `POST` | `/api/scenarios/custom` | `useRunScenario()` | Run custom scenario |
+
+### SSE Event Handling
+
+The `useEventStream` hook:
+- Connects to `/api/sessions/:id/stream`
+- Receives history replay first, then live events
+- Normalizes both PascalCase (`CoroutineCreated`) and kebab-case (`coroutine.created`) formats
+- Auto-invalidates TanStack Query caches on new events
+- Exposes: `events`, `isConnected`, `error`, `clearEvents()`
 
 ## Development
+
+### Proxy Configuration
+
+Defined in `vite.config.ts` - `/api/*` requests forward to `http://localhost:8080`:
+
+```typescript
+server: {
+  port: 3000,
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+  },
+},
+```
 
 ### Mock Service Worker (MSW)
 
@@ -153,6 +234,8 @@ For local development without the backend:
    }
    ```
 
+Mock data includes realistic scenarios (Order Processing, User Registration, Report Generation) with generated hierarchies, thread activity, and timeline events.
+
 ### Code Quality
 
 ```bash
@@ -165,26 +248,29 @@ pnpm format
 
 ## Key Hooks
 
-### `useSessions()`
-Fetch all sessions with automatic refetching and caching.
-
-### `useSession(sessionId)`
-Get details for a specific session including coroutines and events.
-
-### `useEventStream(sessionId, enabled)`
-Connect to SSE stream for real-time event updates.
-
-### `useRunScenario()`
-Execute scenarios and navigate to results.
+| Hook | Description |
+|------|-------------|
+| `useSessions()` | Fetch all sessions with caching |
+| `useSession(id)` | Get session snapshot with coroutines and events |
+| `useCreateSession()` | Mutation to create a new session |
+| `useDeleteSession()` | Mutation to delete a session |
+| `useSessionEvents(id)` | Fetch stored events with pagination |
+| `useEventStream(id, enabled)` | SSE connection for real-time events |
+| `useScenarios()` | List available scenarios |
+| `useRunScenario()` | Mutation to execute a scenario |
+| `useHierarchy(id)` | Coroutine hierarchy tree + stats |
+| `useThreadActivity(id)` | Thread lanes + dispatcher utilization (2s refresh) |
 
 ## Styling
 
 The app uses Tailwind CSS with the HeroUI component library:
 
-- Dark/light mode support
+- Dark/light mode support (class-based toggle)
+- Primary color: `#6366f1` (Indigo light) / `#818cf8` (dark)
 - Responsive design with mobile-first approach
 - Custom container utilities (`container-custom`)
 - Framer Motion for smooth animations
+- `cn()` utility combining clsx + tailwind-merge for safe class composition
 
 ## Performance
 
@@ -192,6 +278,7 @@ The app uses Tailwind CSS with the HeroUI component library:
 - Optimistic updates with TanStack Query
 - Virtualized lists for large datasets (planned)
 - Debounced filters and search
+- `defaultPreload: 'intent'` - routes prefetch on hover
 
 ## Contributing
 
@@ -199,6 +286,8 @@ The app uses Tailwind CSS with the HeroUI component library:
 2. Use TypeScript strictly (no `any` types)
 3. Write accessible components
 4. Test with both real backend and MSW mocks
+
+See [CONTRIBUTING.md](../backend/CONTRIBUTING.md) for full guidelines.
 
 ## License
 
