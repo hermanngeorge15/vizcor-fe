@@ -44,6 +44,8 @@ export interface Scenario {
   name: string
   description: string
   endpoint: string
+  category?: 'realistic' | 'basic'
+  duration?: string
 }
 
 // Custom Scenario Configuration Types
