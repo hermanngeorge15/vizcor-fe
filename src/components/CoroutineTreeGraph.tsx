@@ -4,7 +4,7 @@ import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { Button, Chip } from '@heroui/react'
 import type { CoroutineNode } from '@/types/api'
 import { buildCoroutineTree } from '@/lib/utils'
-import { FiCircle, FiCheckCircle, FiXCircle, FiLoader, FiArrowDown, FiClock, FiPause, FiAlertCircle, FiZoomIn, FiZoomOut, FiMaximize, FiLock, FiUnlock } from 'react-icons/fi'
+import { FiCircle, FiCheckCircle, FiXCircle, FiLoader, FiClock, FiPause, FiAlertCircle, FiZoomIn, FiZoomOut, FiMaximize, FiLock, FiUnlock } from 'react-icons/fi'
 
 interface CoroutineTreeGraphProps {
   coroutines: CoroutineNode[]
